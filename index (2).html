@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐰 Matematika Ceria</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:Arial,sans-serif;text-align:center;
+  background:linear-gradient(135deg,#87ceeb,#e0f7fa);
+  min-height:100vh;padding:25px;
+}
+.game{
+  width:92%;max-width:600px;margin:auto;background:#fff;
+  padding:28px;border-radius:30px;box-shadow:0 8px 25px rgba(0,0,0,.18)
+}
+h1{color:#ff9800;font-size:36px;margin:8px 0 15px}
+#karakter{font-size:90px;animation:lompat 1s infinite}
+@keyframes lompat{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.nama{font-size:22px;font-weight:bold;color:#7b1fa2;margin-bottom:15px}
+.info{font-size:20px;margin:8px}
+#timer{font-size:22px;color:#e53935;font-weight:bold;margin:12px}
+#soal{font-size:46px;font-weight:bold;margin:25px;color:#333}
+.jawaban{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+button{
+  font-size:28px;padding:18px;border:0;border-radius:18px;
+  background:#42a5f5;color:white;cursor:pointer;transition:.2s
+}
+button:hover{background:#1976d2;transform:scale(1.04)}
+#pesan{font-size:24px;font-weight:bold;margin:22px;min-height:34px}
+#mulai{background:#66bb6a}
+.konfeti{font-size:30px}
+@media(max-width:500px){
+  h1{font-size:29px}#soal{font-size:38px}.jawaban{gap:10px}
+  button{font-size:24px;padding:15px}
+}
+</style>
+</head>
+<body>
+<div class="game">
+  <h1>🐰 Matematika Ceria 🧮</h1>
+  <div id="karakter">🐰</div>
+  <div class="nama">Halo! Aku Bimo si Kelinci! 👋</div>
+  <div class="info">⭐ Skor: <span id="skor">0</span></div>
+  <div class="info">📚 Soal: <span id="nomor">1</span> / 10</div>
+  <div id="timer">⏱️ Waktu: 10</div>
+  <div id="soal">3 + 5 = ?</div>
+  <div class="jawaban" id="jawaban"></div>
+  <div id="pesan"></div>
+</div>
+
+<script>
+let skor=0, nomor=1, jawabanBenar, waktu=10, timer, sudahMenjawab=false;
+
+function bunyi(f,d){
+  try{
+    const C=window.AudioContext||window.webkitAudioContext;
+    const a=new C(),o=a.createOscillator(),g=a.createGain();
+    o.connect(g);g.connect(a.destination);o.frequency.value=f;o.type="sine";
+    o.start();g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+d);
+    o.stop(a.currentTime+d);
+  }catch(e){}
+}
+function benar(){bunyi(700,.15);setTimeout(()=>bunyi(900,.2),150)}
+function salah(){bunyi(200,.3)}
+
+function buatSoal(){
+  clearInterval(timer);sudahMenjawab=false;waktu=10;
+  document.getElementById("timer").textContent="⏱️ Waktu: 10";
+  const a=Math.floor(Math.random()*10)+1,b=Math.floor(Math.random()*10)+1;
+  jawabanBenar=a+b;
+  document.getElementById("soal").textContent=`${a} + ${b} = ?`;
+  let pilihan=[jawabanBenar];
+  while(pilihan.length<4){
+    const x=Math.floor(Math.random()*20)+1;
+    if(!pilihan.includes(x))pilihan.push(x);
+  }
+  pilihan.sort(()=>Math.random()-.5);
+  const box=document.getElementById("jawaban");box.innerHTML="";
+  pilihan.forEach(x=>{
+    const btn=document.createElement("button");
+    btn.textContent=x;btn.onclick=()=>cekJawaban(x);box.appendChild(btn);
+  });
+  mulaiTimer();
+}
+
+function mulaiTimer(){
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    waktu--;
+    document.getElementById("timer").textContent="⏱️ Waktu: "+waktu;
+    if(waktu<=0){
+      clearInterval(timer);
+      if(sudahMenjawab)return;
+      sudahMenjawab=true;
+      document.getElementById("pesan").textContent="⏰ Waktu habis!";
+      document.getElementById("karakter").textContent="🐰😅";
+      salah();
+      setTimeout(soalBerikutnya,900);
+    }
+  },1000);
+}
+
+function cekJawaban(x){
+  if(sudahMenjawab)return;
+  if(x===jawabanBenar){
+    sudahMenjawab=true;clearInterval(timer);skor+=10;
+    document.getElementById("skor").textContent=skor;
+    document.getElementById("pesan").textContent="🎉 BENAR! Hebat!";
+    document.getElementById("karakter").textContent="🐰🎉";
+    benar();
+    setTimeout(soalBerikutnya,900);
+  }else{
+    document.getElementById("pesan").textContent="❌ Belum benar, coba lagi!";
+    document.getElementById("karakter").textContent="🐰😅";
+    salah();
+  }
+}
+
+function soalBerikutnya(){
+  if(nomor>=10){selesai();return}
+  nomor++;
+  document.getElementById("nomor").textContent=nomor;
+  document.getElementById("pesan").textContent="";
+  document.getElementById("karakter").textContent="🐰";
+  buatSoal();
+}
+
+function selesai(){
+  clearInterval(timer);
+  bunyi(600,.15);setTimeout(()=>bunyi(800,.15),150);setTimeout(()=>bunyi(1000,.3),300);
+  document.getElementById("karakter").textContent="🐰🏆";
+  document.getElementById("soal").textContent="🎊 Permainan Selesai!";
+  document.getElementById("jawaban").innerHTML='<button id="mulai" onclick="mulaiLagi()">🔄 MAIN LAGI</button>';
+  document.getElementById("pesan").innerHTML=`🏆 Skor kamu: ${skor} / 100`;
+}
+function mulaiLagi(){
+  skor=0;nomor=1;
+  document.getElementById("skor").textContent=0;
+  document.getElementById("nomor").textContent=1;
+  document.getElementById("pesan").textContent="";
+  document.getElementById("karakter").textContent="🐰";
+  buatSoal();
+}
+buatSoal();
+</script>
+</body>
+</html>
